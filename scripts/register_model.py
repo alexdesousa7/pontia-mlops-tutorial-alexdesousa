@@ -1,36 +1,29 @@
-import mlflow
-from mlflow.tracking import MlflowClient
 import os
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
+import json
 
-
-
-# Set the tracking URI if it's not the default
-mlflow.set_tracking_uri("http://localhost:5000")
-
-client = MlflowClient()
-
-# Replace with your actual run ID and model artifact path
-with open("run_id.txt", "r") as f:
-    run_id = f.read().strip()
-model_name =  os.getenv("MODEL_NAME", "no_name")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_DIR = PROJECT_ROOT / "models"
-model_artifact_path = MODEL_DIR / "model.pkl"
+REGISTRY_DIR = PROJECT_ROOT / "model_registry"
+REGISTRY_DIR.mkdir(exist_ok=True)
 
-# Register the model
-result = mlflow.register_model(
-    model_uri=f"runs:/{run_id}/{model_artifact_path}",
-    name=model_name
-)
+run_id = os.getenv("RUN_ID", "unknown")
+model_name = os.getenv("MODEL_NAME", "adult-income-model")
 
-# Optionally, you can wait until the model is ready
-client.transition_model_version_stage(
-    name=model_name,
-    version=result.version,
-    stage="Staging"
-)
+registry_entry = {
+    "model_name": model_name,
+    "run_id": run_id,
+    "timestamp": datetime.now().isoformat(),
+    "artifacts": {
+        "model": str(MODEL_DIR / "model.pkl"),
+        "scaler": str(MODEL_DIR / "scaler.pkl"),
+        "encoders": str(MODEL_DIR / "encoders.pkl")
+    }
+}
 
+output_file = REGISTRY_DIR / f"{model_name}_{run_id}.json"
+with open(output_file, "w") as f:
+    json.dump(registry_entry, f, indent=4)
 
-client.set_registered_model_alias(model_name, "champion", result.version)
+print(f"Model registered at {output_file}")
