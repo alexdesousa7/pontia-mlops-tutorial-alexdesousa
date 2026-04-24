@@ -39,16 +39,25 @@ def test_model_accuracy():
         "capital-gain", "capital-loss", "hours-per-week", "native-country", "income"
     ]
 
+    # Split features/target
     X_test_raw = test_data.iloc[:, :-1]
     y_test = test_data.iloc[:, -1].str.strip().str.replace('.', '', regex=False)
 
+    # Clean categorical columns (remove leading/trailing spaces)
+    X_test_raw = X_test_raw.apply(lambda col: col.str.strip() if col.dtype == "object" else col)
+
+    # Apply encoders to categorical columns
     for col, encoder in encoders.items():
         X_test_raw[col] = encoder.transform(X_test_raw[col])
 
+    # Scale numerical columns
     numeric_cols = X_test_raw.select_dtypes(include=['int64', 'float64']).columns
     X_test_raw[numeric_cols] = scaler.transform(X_test_raw[numeric_cols])
 
+    # Predict
     predictions = model.predict(X_test_raw)
 
+    # Accuracy check
     accuracy = accuracy_score(y_test, predictions)
     assert accuracy >= 0.80, f"Model accuracy below expected threshold: {accuracy:.2f}"
+
