@@ -42,6 +42,7 @@ def test_model_accuracy():
     # Split features/target
     X_test_raw = test_data.iloc[:, :-1]
     y_test = test_data.iloc[:, -1].str.strip().str.replace('.', '', regex=False)
+    y_test = y_test.map({'<=50K': 0, '>50K': 1})
 
     # Clean categorical columns (remove leading/trailing spaces)
     X_test_raw = X_test_raw.apply(lambda col: col.str.strip() if col.dtype == "object" else col)
