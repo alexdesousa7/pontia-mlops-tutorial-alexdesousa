@@ -1,0 +1,15 @@
+# Creamos el archivo render indicado en la documentacion del ejercicio para el modulo de DevOps 
+
+services:
+  - type: web
+    name: pontia-mlops-tutorial-alexdesousa
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: deployment
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 8080
+    envVars:
+      - key: GITHUB_REPO
+        value: "alexdesousa7/pontia-mlops-tutorial-alexdesousa"
+
