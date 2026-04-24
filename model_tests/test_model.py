@@ -27,10 +27,29 @@ def test_prediction_values():
     assert set(predictions).issubset({0, 1}), f"Predictions contain unexpected classes: {set(predictions)}"
 
 def test_model_accuracy():
+    # Load artifacts
     model = joblib.load('models/model.pkl')
+    scaler = joblib.load('models/scaler.pkl')
+    encoders = joblib.load('models/encoders.pkl')
+
+    # Load raw test data
     test_data = pd.read_csv('data/raw/adult.test', header=None, skiprows=1)
-    X_test = test_data.iloc[:, :-1]
+
+    # Split features/target
+    X_test_raw = test_data.iloc[:, :-1]
     y_test = test_data.iloc[:, -1].str.strip().str.replace('.', '', regex=False)
-    predictions = model.predict(X_test)
+
+    # Apply encoders to categorical columns
+    for col, encoder in encoders.items():
+        X_test_raw[col] = encoder.transform(X_test_raw[col])
+
+    # Scale numerical columns
+    numeric_cols = X_test_raw.select_dtypes(include=['int64', 'float64']).columns
+    X_test_raw[numeric_cols] = scaler.transform(X_test_raw[numeric_cols])
+
+    # Predict
+    predictions = model.predict(X_test_raw)
+
+    # Accuracy check
     accuracy = accuracy_score(y_test, predictions)
     assert accuracy >= 0.80, f"Model accuracy below expected threshold: {accuracy:.2f}"
