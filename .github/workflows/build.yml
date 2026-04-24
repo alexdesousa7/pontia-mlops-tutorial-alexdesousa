@@ -40,8 +40,7 @@ jobs:
 
       - name: Run model tests
         run: |
-          cd model_tests
-          python test_model.py
+          PYTHONPATH=src pytest model_tests/
 
       - name: Upload model to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -56,3 +55,9 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Register model
+        run: python scripts/register_model.py
+        env:
+          RUN_ID: ${{ github.run_id }}
+          MODEL_NAME: "adult-income-model"
